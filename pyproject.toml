@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sendrelay"
+version = "1.7.0"
+description = "Official Relay server SDK for Python: quotes, deliveries, webhooks and tracking tokens"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "SendRelay" }]
+requires-python = ">=3.9"
+dependencies = [
+  "httpx>=0.25,<1",
+  "typing_extensions>=4.7",
+]
+keywords = ["relay", "delivery", "logistics", "dispatch", "sdk", "api"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+  "Framework :: AsyncIO",
+]
+
+[project.urls]
+Homepage = "https://sendrelay.com.ng"
+Documentation = "https://docs.sendrelay.com.ng/sdks/python-sdk"
+Source = "https://github.com/SendRelay/relay-sdk-python"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11", "build>=1.2", "twine>=5"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sendrelay"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# Keep typing.Dict/Optional: annotations must still evaluate on Python 3.9.
+ignore = ["UP006", "UP007", "UP035", "UP045"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/sendrelay"]
