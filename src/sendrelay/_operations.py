@@ -52,6 +52,10 @@ def tasks_dispute(task_id: str, body: Mapping[str, Any]) -> Request:
     return Request("POST", f"/sdk/tasks/{_id(task_id, 'task_id')}/dispute", body=dict(body))
 
 
+def tasks_simulate_advance(task_id: str) -> Request:
+    return Request("POST", f"/sdk/tasks/{_id(task_id, 'task_id')}/simulate/advance")
+
+
 def webhooks_create(body: Mapping[str, Any]) -> Request:
     return Request("POST", "/sdk/webhooks", body=dict(body))
 

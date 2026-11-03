@@ -16,6 +16,7 @@ from .types import (
     ListTasksResponse,
     ListWebhooksResponse,
     PresenceResponse,
+    SimulateAdvanceResponse,
     TaskListItem,
     TaskQuoteResponse,
     Webhook,
@@ -112,6 +113,10 @@ class Tasks:
 
     def dispute(self, task_id: str, body: Body) -> Dict[str, Any]:
         return cast(Dict[str, Any], self._run(ops.tasks_dispute(task_id, body)))
+
+    def simulate_advance(self, task_id: str) -> SimulateAdvanceResponse:
+        """Test keys only: open a ``SCHEDULED`` task's search now instead of at ``searchStartsAt``."""
+        return cast(SimulateAdvanceResponse, self._run(ops.tasks_simulate_advance(task_id)))
 
 
 class Webhooks:
@@ -249,6 +254,10 @@ class AsyncTasks:
 
     async def dispute(self, task_id: str, body: Body) -> Dict[str, Any]:
         return cast(Dict[str, Any], await self._run(ops.tasks_dispute(task_id, body)))
+
+    async def simulate_advance(self, task_id: str) -> SimulateAdvanceResponse:
+        """Test keys only: open a ``SCHEDULED`` task's search now instead of at ``searchStartsAt``."""
+        return cast(SimulateAdvanceResponse, await self._run(ops.tasks_simulate_advance(task_id)))
 
 
 class AsyncWebhooks:

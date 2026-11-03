@@ -42,6 +42,7 @@ SYNC: Dict[str, Callable[[Relay, Dict[str, Any]], Any]] = {
     "tasks.availableRiders": lambda r, i: r.tasks.available_riders(i["taskId"], **(i.get("query") or {})),
     "tasks.rate": lambda r, i: r.tasks.rate(i["taskId"], i["body"]),
     "tasks.dispute": lambda r, i: r.tasks.dispute(i["taskId"], i["body"]),
+    "tasks.simulateAdvance": lambda r, i: r.tasks.simulate_advance(i["taskId"]),
     "webhooks.create": lambda r, i: r.webhooks.create(i["body"]),
     "webhooks.list": lambda r, i: r.webhooks.list(),
     "webhooks.get": lambda r, i: r.webhooks.get(i["webhookId"]),
@@ -74,6 +75,8 @@ async def run_async(relay: AsyncRelay, op: str, i: Dict[str, Any]) -> Any:
         return await relay.tasks.rate(i["taskId"], i["body"])
     if op == "tasks.dispute":
         return await relay.tasks.dispute(i["taskId"], i["body"])
+    if op == "tasks.simulateAdvance":
+        return await relay.tasks.simulate_advance(i["taskId"])
     if op == "webhooks.create":
         return await relay.webhooks.create(i["body"])
     if op == "webhooks.list":
