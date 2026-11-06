@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.0 — 2026-11-06
+
+- Insurance on tasks: `"insured": False` on create and quote turns it off for that task. It is on by default.
+- `insuranceFee` and `insuredValue` on quote and create pricing. The premium is now its own line: VAT applies to it, and fare premiums and the platform fee no longer do.
+
 ## 1.8.0 — 2026-11-03
 
 - Keep looking for a rider and scheduled pickups ([dispatch strategies](https://docs.sendrelay.com.ng/tasks/keep-looking-and-scheduling)).

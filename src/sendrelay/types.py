@@ -116,6 +116,9 @@ class TaskQuoteRequest(TypedDict):
     priority: NotRequired[Priority]
     preferences: NotRequired[Preferences]
     dispatch: NotRequired[DispatchRequest]
+    # Insurance on the items' declared values. On by default; False turns it off for this task, so
+    # no premium is charged and loss or damage is not covered. Send the same value you quoted.
+    insured: NotRequired[bool]
 
 
 class CreateTaskRequest(TaskQuoteRequest):
@@ -209,6 +212,9 @@ class TaskQuoteResponse(TypedDict):
     subtotal: int
     tax: int
     platformFee: int
+    # The premium (0 when not insured), included in subtotal and total, and the value it covers.
+    insuranceFee: int
+    insuredValue: int
     quoteId: str
     expiresAt: str
     quoteTtlSeconds: int
