@@ -167,6 +167,12 @@ class Task(TypedDict):
     updatedAt: str
     completionCodeRequired: bool
     completionCodeLength: Optional[int]
+    # Goes up with every event about the task and matches events' data["revision"]. 0 before the first.
+    revision: int
+    # Currency of every amount, in minor units (kobo for NGN).
+    currency: Literal["NGN"]
+    # A completion photo is required at every DROPOFF.
+    requirePhoto: NotRequired[bool]
     rider: NotRequired[Dict[str, Any]]
     completionCode: NotRequired[Optional[Dict[str, Any]]]
     dispatch: TaskDispatch
@@ -192,6 +198,9 @@ class TaskListItem(TypedDict):
     taskType: TaskType
     totalFee: int
     createdAt: str
+    updatedAt: NotRequired[str]
+    revision: NotRequired[int]
+    currency: NotRequired[Literal["NGN"]]
 
 
 class ListTasksResponse(TypedDict):
@@ -265,3 +274,91 @@ class PresenceResponse(TypedDict):
     totals: Dict[str, Any]
     generatedAt: str
     refreshAfterSeconds: int
+
+
+class RelayEvent(TypedDict):
+    """An event exactly as its webhook carried it. Task events carry ``data["revision"]``."""
+
+    id: str
+    type: str
+    version: str
+    timestamp: str
+    data: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class ListEventsResponse(TypedDict):
+    data: List[RelayEvent]
+    hasMore: bool
+    cursor: Optional[str]
+
+
+class TaskEventsResponse(TypedDict):
+    data: List[RelayEvent]
+
+
+class RedeliverWebhookResponse(TypedDict):
+    webhookId: str
+    eventId: str
+    queued: Literal[True]
+
+
+class TrackingLinkResponse(TypedDict):
+    """A hosted tracking page to send your customer; Relay never contacts them itself."""
+
+    url: str
+    expiresAt: str
+    stageIndex: Optional[int]
+
+
+# Insurance claims, for insured goods lost, stolen or damaged after collection. Amounts in kobo.
+ClaimIncidentType = Literal["LOST", "STOLEN", "DAMAGED"]
+ClaimStatus = Union[
+    Literal["SUBMITTED", "NEEDS_INFO", "WITH_INSURER", "APPROVED", "DECLINED", "PAID", "WITHDRAWN"], str
+]
+ClaimFileContentType = Literal["image/jpeg", "image/png", "image/webp", "application/pdf"]
+
+
+class ClaimFile(TypedDict):
+    """A file from ``claims.create_upload``, by its ``key``, with the name to show for it."""
+
+    key: str
+    name: str
+
+
+class Claim(TypedDict):
+    id: str
+    reference: str
+    status: ClaimStatus
+    incidentType: ClaimIncidentType
+    incidentDate: str
+    claimedAmount: int
+    approvedAmount: Optional[int]
+    description: str
+    files: List[Dict[str, str]]
+    infoRequest: Optional[str]
+    decisionReason: Optional[str]
+    filedOn: Optional[str]
+    decidedOn: Optional[str]
+    paidOn: Optional[str]
+
+
+class ClaimState(TypedDict):
+    """A task's claim, or whether you can file one (``can_file``/``reason``) and until when."""
+
+    claim: Optional[Claim]
+    canFile: bool
+    reason: Optional[str]
+    insuredValue: Optional[int]
+    certificateNumber: Optional[str]
+    closesOn: Optional[str]
+
+
+class ClaimUpload(TypedDict):
+    """PUT the file to ``uploadUrl`` with ``Content-Type: contentType`` before ``expiresAt``, then send ``key``."""
+
+    uploadUrl: str
+    key: str
+    contentType: ClaimFileContentType
+    maxFileSize: int
+    expiresAt: str

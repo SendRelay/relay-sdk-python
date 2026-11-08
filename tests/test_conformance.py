@@ -50,6 +50,17 @@ SYNC: Dict[str, Callable[[Relay, Dict[str, Any]], Any]] = {
     "webhooks.delete": lambda r, i: r.webhooks.delete(i["webhookId"]),
     "auth.createWebSocketToken": lambda r, i: r.auth.create_websocket_token(i["body"]),
     "presence.get": lambda r, i: r.presence.get(**i["query"]),
+    "tasks.events": lambda r, i: r.tasks.events(i["taskId"]),
+    "tasks.update": lambda r, i: r.tasks.update(i["taskId"], i["body"]),
+    "tasks.trackingLink": lambda r, i: r.tasks.tracking_link(i["taskId"], i.get("body")),
+    "events.list": lambda r, i: r.events.list(**(i.get("query") or {})),
+    "events.listAll": lambda r, i: [e["id"] for e in r.events.list_all(**(i.get("query") or {}))],
+    "webhooks.redeliver": lambda r, i: r.webhooks.redeliver(i["webhookId"], i["body"]),
+    "claims.get": lambda r, i: r.claims.get(i["taskId"]),
+    "claims.createUpload": lambda r, i: r.claims.create_upload(i["taskId"], i["body"]),
+    "claims.file": lambda r, i: r.claims.file(i["taskId"], i["body"]),
+    "claims.respond": lambda r, i: r.claims.respond(i["taskId"], i["body"]),
+    "claims.withdraw": lambda r, i: r.claims.withdraw(i["taskId"]),
 }
 
 
@@ -91,6 +102,28 @@ async def run_async(relay: AsyncRelay, op: str, i: Dict[str, Any]) -> Any:
         return await relay.auth.create_websocket_token(i["body"])
     if op == "presence.get":
         return await relay.presence.get(**q)
+    if op == "tasks.events":
+        return await relay.tasks.events(i["taskId"])
+    if op == "tasks.update":
+        return await relay.tasks.update(i["taskId"], i["body"])
+    if op == "tasks.trackingLink":
+        return await relay.tasks.tracking_link(i["taskId"], i.get("body"))
+    if op == "events.list":
+        return await relay.events.list(**q)
+    if op == "events.listAll":
+        return [e["id"] async for e in relay.events.list_all(**q)]
+    if op == "webhooks.redeliver":
+        return await relay.webhooks.redeliver(i["webhookId"], i["body"])
+    if op == "claims.get":
+        return await relay.claims.get(i["taskId"])
+    if op == "claims.createUpload":
+        return await relay.claims.create_upload(i["taskId"], i["body"])
+    if op == "claims.file":
+        return await relay.claims.file(i["taskId"], i["body"])
+    if op == "claims.respond":
+        return await relay.claims.respond(i["taskId"], i["body"])
+    if op == "claims.withdraw":
+        return await relay.claims.withdraw(i["taskId"])
     raise AssertionError(f"no async binding for {op}")
 
 

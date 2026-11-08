@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.0 — 2026-11-08
+
+- `relay.events.list()` and `relay.events.list_all()`: the event log, every event for your account and mode, kept for 30 days. `types` filters by event type.
+- `relay.tasks.events(task_id)`: every event about one task, oldest first.
+- `relay.claims`: insurance claims on a task, for insured goods lost, stolen or damaged after collection. `get`, `create_upload` (a URL to PUT one photo or PDF to), `file`, `respond` and `withdraw`, on `Relay` and `AsyncRelay`. Live keys only.
+- `relay.webhooks.redeliver(webhook_id, {"eventId": ...})`: send a logged event to an endpoint again, with the same id.
+- `updatedSince` on `tasks.list()` and `list_all()`: tasks changed since a time, in `updatedAt` order, for reconciliation jobs.
+- `revision` and `currency` on tasks. Task events carry `data["revision"]`: apply an event only if it is higher than the revision you stored.
+- `tasks.update(task_id, body)` edits notes, externalId, and a stop's instructions and contact; `tasks.tracking_link(task_id, body=None)` returns a hosted tracking page. Tasks return `requirePhoto`.
+
 ## 1.9.0 — 2026-11-06
 
 - Insurance on tasks: `"insured": False` on create and quote turns it off for that task. It is on by default.

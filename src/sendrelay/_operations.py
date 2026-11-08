@@ -32,6 +32,57 @@ def tasks_get(task_id: str) -> Request:
     return Request("GET", f"/sdk/tasks/{_id(task_id, 'task_id')}")
 
 
+def tasks_update(task_id: str, body: Mapping[str, Any]) -> Request:
+    return Request("PATCH", f"/sdk/tasks/{_id(task_id, 'task_id')}", body=dict(body))
+
+
+def tasks_tracking_link(task_id: str, body: Optional[Mapping[str, Any]]) -> Request:
+    return Request("POST", f"/sdk/tasks/{_id(task_id, 'task_id')}/tracking-link", body=dict(body or {}))
+
+
+def tasks_events(task_id: str) -> Request:
+    return Request("GET", f"/sdk/tasks/{_id(task_id, 'task_id')}/events")
+
+
+def events_list(query: Optional[Mapping[str, Any]]) -> Request:
+    params = dict(query or {})
+    types = params.get("types")
+    if isinstance(types, (list, tuple)):
+        if types:
+            params["types"] = ",".join(types)
+        else:
+            params.pop("types")
+    return Request("GET", "/sdk/events", query=params)
+
+
+def webhooks_redeliver(webhook_id: str, body: Mapping[str, Any]) -> Request:
+    return Request("POST", f"/sdk/webhooks/{_id(webhook_id, 'webhook_id')}/redeliver", body=dict(body))
+
+
+def _claim(task_id: str) -> str:
+    return f"/sdk/tasks/{_id(task_id, 'task_id')}/claim"
+
+
+def claims_get(task_id: str) -> Request:
+    return Request("GET", _claim(task_id))
+
+
+def claims_create_upload(task_id: str, body: Mapping[str, Any]) -> Request:
+    return Request("POST", f"{_claim(task_id)}/evidence", body=dict(body))
+
+
+def claims_file(task_id: str, body: Mapping[str, Any]) -> Request:
+    return Request("POST", _claim(task_id), body=dict(body))
+
+
+def claims_respond(task_id: str, body: Mapping[str, Any]) -> Request:
+    return Request("POST", f"{_claim(task_id)}/respond", body=dict(body))
+
+
+def claims_withdraw(task_id: str) -> Request:
+    return Request("POST", f"{_claim(task_id)}/withdraw")
+
+
 def tasks_cancel(task_id: str, body: Optional[Mapping[str, Any]]) -> Request:
     return Request("DELETE", f"/sdk/tasks/{_id(task_id, 'task_id')}/cancel", body=dict(body) if body else None)
 
