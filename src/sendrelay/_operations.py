@@ -153,4 +153,11 @@ def auth_create_websocket_token(body: Mapping[str, Any]) -> Request:
 
 
 def presence_get(query: Mapping[str, Any]) -> Request:
-    return Request("GET", "/sdk/presence", query=query)
+    params = dict(query)
+    vehicles = params.get("vehicleType")
+    if isinstance(vehicles, (list, tuple)):
+        if vehicles:
+            params["vehicleType"] = ",".join(vehicles)
+        else:
+            del params["vehicleType"]
+    return Request("GET", "/sdk/presence", query=params)

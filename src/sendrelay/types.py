@@ -148,6 +148,18 @@ class TaskRating(TypedDict):
     createdAt: str
 
 
+class TaskRequirementsVehicle(TypedDict):
+    vehicleType: str
+    # "BOX", "REFRIGERATION" or "AIR_CONDITIONING"; treat others as equipment you can't check.
+    equipment: List[str]
+
+
+class TaskRequirements(TypedDict):
+    """The vehicles Relay looks for and the equipment a rider on each needs."""
+
+    vehicles: List[TaskRequirementsVehicle]
+
+
 class Task(TypedDict):
     id: str
     developerId: str
@@ -176,6 +188,7 @@ class Task(TypedDict):
     rider: NotRequired[Dict[str, Any]]
     completionCode: NotRequired[Optional[Dict[str, Any]]]
     dispatch: TaskDispatch
+    requirements: NotRequired[TaskRequirements]
 
 
 class SimulateAdvanceResponse(TypedDict):
@@ -227,6 +240,8 @@ class TaskQuoteResponse(TypedDict):
     quoteId: str
     expiresAt: str
     quoteTtlSeconds: int
+    # What the task will need, as create will store it.
+    requirements: NotRequired[TaskRequirements]
 
 
 class CancelTaskResponse(TypedDict):
@@ -274,6 +289,8 @@ class PresenceResponse(TypedDict):
     totals: Dict[str, Any]
     generatedAt: str
     refreshAfterSeconds: int
+    # With ``taskType``: what the counted riders have, as the quote would return it.
+    requirements: NotRequired[TaskRequirements]
 
 
 class RelayEvent(TypedDict):

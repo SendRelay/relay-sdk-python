@@ -187,7 +187,12 @@ class Presence:
         self._run = run
 
     def get(self, **query: Any) -> PresenceResponse:
-        """Anonymous rider availability around a point: ``latitude``, ``longitude``, ``resolution``."""
+        """Anonymous rider availability around a point: ``latitude``, ``longitude``, ``resolution``.
+
+        With ``taskType``, counts only riders who could take that job; ``vehicleType`` (a list),
+        ``hasBox``, ``hasRefrigeration``, ``hasAirConditioning``, ``estimatedWeight`` and
+        ``estimatedSize`` use the quote's meanings. The response then has ``requirements``.
+        """
         return cast(PresenceResponse, self._run(ops.presence_get(query)))
 
 

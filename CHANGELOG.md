@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.0 — 2026-11-09
+
+- `requirements` on `Task` and `TaskQuoteResponse` (`TaskRequirements`): each vehicle Relay looks for and the equipment a rider on it needs, for example a box on a motorcycle for food. See [the box a task needs](https://docs.sendrelay.com.ng/concepts/dispatch#the-box-a-task-needs).
+- `client.presence.get()` takes a job: `taskType`, `vehicleType` (a list, sent comma-separated), `hasBox`, `hasRefrigeration`, `hasAirConditioning`, `estimatedWeight` and `estimatedSize`, with the quote's meanings. It then counts only riders who could take that job and returns `requirements`. Without `taskType` the map is unchanged.
+
 ## 1.10.0 — 2026-11-08
 
 - `relay.events.list()` and `relay.events.list_all()`: the event log, every event for your account and mode, kept for 30 days. `types` filters by event type.
