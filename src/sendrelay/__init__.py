@@ -1,4 +1,4 @@
-"""Official Relay server SDK for Python.
+"""Official SendRelay server SDK for Python.
 
 Quote and create deliveries, read them back with the rider's live ETA, manage webhooks and mint
 tracking tokens for your apps. Use ``Relay`` in regular code and ``AsyncRelay`` with asyncio.

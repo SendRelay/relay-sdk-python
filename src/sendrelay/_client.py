@@ -237,7 +237,7 @@ class Claims:
         return cast(Claim, self._run(ops.claims_file(task_id, body)))
 
     def respond(self, task_id: str, body: Body) -> Claim:
-        """Answer Relay's request for more information (``status == "NEEDS_INFO"``): ``message``, ``files``."""
+        """Answer SendRelay's request for more information (``status == "NEEDS_INFO"``): ``message``, ``files``."""
         return cast(Claim, self._run(ops.claims_respond(task_id, body)))
 
     def withdraw(self, task_id: str) -> Claim:
@@ -246,7 +246,7 @@ class Claims:
 
 
 class Relay(_Base):
-    """The Relay server SDK. Keep your API key on your server.
+    """The SendRelay server SDK. Keep your API key on your server.
 
     Example::
 
@@ -431,7 +431,7 @@ class AsyncClaims:
 
 
 class AsyncRelay(_Base):
-    """The Relay server SDK for asyncio. Same methods as ``Relay``, awaited.
+    """The SendRelay server SDK for asyncio. Same methods as ``Relay``, awaited.
 
     Example::
 

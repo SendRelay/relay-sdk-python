@@ -1,6 +1,6 @@
-# Relay Python SDK
+# SendRelay Python SDK
 
-The official server SDK for [Relay](https://sendrelay.com.ng), the delivery API. Quote and create deliveries, read them back with the rider's live ETA, manage webhooks, and mint tracking tokens for your apps.
+The official server SDK for [SendRelay](https://sendrelay.com.ng), the delivery API. Quote and create deliveries, read them back with the rider's live ETA, manage webhooks, and mint tracking tokens for your apps.
 
 ```bash
 pip install sendrelay

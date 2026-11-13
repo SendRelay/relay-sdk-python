@@ -1,6 +1,6 @@
 """Runs the shared SDK conformance fixtures (packages/sdks/conformance) against this SDK.
 
-Every Relay SDK runs the same fixtures, which is how they stay at parity. Each fixture runs twice:
+Every SendRelay SDK runs the same fixtures, which is how they stay at parity. Each fixture runs twice:
 once through ``Relay`` and once through ``AsyncRelay``.
 """
 

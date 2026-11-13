@@ -156,6 +156,8 @@ class Resource:
         scriptName: str
         type: str
         workflowName: str
+    class RelayTrackingRateLimit:
+        type: str
     class RelayWebGoogleMapApiKeySecret:
         type: str
         value: str

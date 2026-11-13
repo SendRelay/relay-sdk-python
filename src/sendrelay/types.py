@@ -8,11 +8,11 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from typing_extensions import NotRequired, TypedDict
 
 TaskType = Literal["PASSENGER_RIDE", "FOOD_DELIVERY", "PACKAGE_DELIVERY", "BULK_DELIVERY", "ERRAND"]
-# Relay adds statuses over time; one this version does not list arrives as its raw string.
+# SendRelay adds statuses over time; one this version does not list arrives as its raw string.
 # Handle the ones you know and treat any other as "still in progress".
 TaskStatus = Union[
     Literal[
-        "SCHEDULED",  # booked for a pickup time; Relay has not started looking yet
+        "SCHEDULED",  # booked for a pickup time; SendRelay has not started looking yet
         "PENDING",
         "SEARCHING",  # still looking for a rider after the first offers
         "OFFERED",
@@ -25,7 +25,7 @@ TaskStatus = Union[
     ],
     str,
 ]
-# When Relay looks for a rider; an unknown strategy arrives as its raw string.
+# When SendRelay looks for a rider; an unknown strategy arrives as its raw string.
 DispatchStrategy = Union[Literal["IMMEDIATE", "WAIT_FOR_RIDER", "SCHEDULED"], str]
 Priority = Literal["STANDARD", "URGENT"]
 StageType = Literal["PICKUP", "DROPOFF"]
@@ -155,7 +155,7 @@ class TaskRequirementsVehicle(TypedDict):
 
 
 class TaskRequirements(TypedDict):
-    """The vehicles Relay looks for and the equipment a rider on each needs."""
+    """The vehicles SendRelay looks for and the equipment a rider on each needs."""
 
     vehicles: List[TaskRequirementsVehicle]
 
@@ -321,7 +321,7 @@ class RedeliverWebhookResponse(TypedDict):
 
 
 class TrackingLinkResponse(TypedDict):
-    """A hosted tracking page to send your customer; Relay never contacts them itself."""
+    """A hosted tracking page to send your customer; SendRelay never contacts them itself."""
 
     url: str
     expiresAt: str

@@ -24,7 +24,7 @@ def verify_webhook_signature(
     secret: str,
     tolerance: int = 300,
 ) -> WebhookSignatureVerification:
-    """Check that a webhook came from Relay and wasn't changed on the way.
+    """Check that a webhook came from SendRelay and wasn't changed on the way.
 
     Pass the raw request body (exactly as received), the ``X-Relay-Signature`` header and the
     ``whsec_...`` secret you got when you created the webhook. ``tolerance`` is how old, in seconds,
