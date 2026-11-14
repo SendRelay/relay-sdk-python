@@ -31,7 +31,7 @@ Priority = Literal["STANDARD", "URGENT"]
 StageType = Literal["PICKUP", "DROPOFF"]
 Weight = Literal["LIGHT", "STANDARD", "HEAVY", "FREIGHT"]
 Size = Literal["ENVELOPE", "BOX", "LARGE_BOX", "FREIGHT"]
-VehicleType = Literal["BICYCLE", "BIKE", "MOTORCYCLE", "TRICYCLE", "CAR", "VAN", "TRUCK"]
+VehicleType = Literal["BICYCLE", "MOTORCYCLE", "TRICYCLE", "CAR", "VAN", "TRUCK"]
 WebhookMode = Literal["test", "live"]
 PresenceResolution = Literal["BLOCK", "NEIGHBOURHOOD", "DISTRICT"]
 

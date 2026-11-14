@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.0 — 2026-11-14
+
+- `VehicleType` no longer includes `BIKE`; use `MOTORCYCLE`. The API now rejects `BIKE` with a 400, and the presence map no longer returns a `BIKE` count. See the [changelog](https://docs.sendrelay.com.ng/changelog).
+
 ## 1.11.0 — 2026-11-09
 
 - `requirements` on `Task` and `TaskQuoteResponse` (`TaskRequirements`): each vehicle SendRelay looks for and the equipment a rider on it needs, for example a box on a motorcycle for food. See [the box a task needs](https://docs.sendrelay.com.ng/concepts/dispatch#the-box-a-task-needs).
