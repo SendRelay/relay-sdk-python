@@ -7,7 +7,10 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from typing_extensions import NotRequired, TypedDict
 
-TaskType = Literal["PASSENGER_RIDE", "FOOD_DELIVERY", "PACKAGE_DELIVERY", "BULK_DELIVERY", "ERRAND"]
+# POOLED_DELIVERY goes out in a wave on set days of the week, shared with deliveries going the same way: it needs
+# ``window``, one PICKUP and one DROPOFF, and no ``dispatch``. BULK_DELIVERY was renamed
+# POOLED_DELIVERY; create and quote refuse it (TASK_TYPE_RENAMED), older tasks keep it.
+TaskType = Literal["PASSENGER_RIDE", "FOOD_DELIVERY", "PACKAGE_DELIVERY", "POOLED_DELIVERY", "BULK_DELIVERY", "ERRAND"]
 # SendRelay adds statuses over time; one this version does not list arrives as its raw string.
 # Handle the ones you know and treat any other as "still in progress".
 TaskStatus = Union[
@@ -27,6 +30,10 @@ TaskStatus = Union[
 ]
 # When SendRelay looks for a rider; an unknown strategy arrives as its raw string.
 DispatchStrategy = Union[Literal["IMMEDIATE", "WAIT_FOR_RIDER", "SCHEDULED"], str]
+# A pooled delivery wave; an unknown one arrives as its raw string.
+PooledWave = Union[Literal["MIDDAY"], str]
+# Waiting for the wave, on a shared route, or going alone.
+PooledState = Union[Literal["WAITING", "GROUPED", "SOLO"], str]
 Priority = Literal["STANDARD", "URGENT"]
 StageType = Literal["PICKUP", "DROPOFF"]
 Weight = Literal["LIGHT", "STANDARD", "HEAVY", "FREIGHT"]
@@ -110,12 +117,61 @@ class TaskDispatch(TypedDict):
     offerRounds: int
 
 
+class PooledWindowRequest(TypedDict):
+    """``window`` on create and quote, POOLED_DELIVERY only. Leave ``date`` (YYYY-MM-DD, Lagos) out
+    for the next wave still open. Quote without a window to see the upcoming waves."""
+
+    wave: PooledWave
+    date: NotRequired[str]
+
+
+class TaskPooledWindow(TypedDict):
+    """A pooled delivery's ``window`` on the task."""
+
+    wave: PooledWave
+    date: str
+    bookBy: str  # last moment to book, and to cancel for free
+    pickupFrom: str
+    pickupTo: str
+    deliverBy: str
+    state: PooledState
+    sharedWith: Optional[int]  # other deliveries on its route (never who they are)
+    plannedPickupAt: Optional[str]
+    plannedDeliveryAt: Optional[str]
+    # Stops the rider makes before this delivery's next stop, while that is known.
+    stopsBefore: NotRequired[Optional[int]]
+
+
+class PooledQuotePricing(TypedDict):
+    kind: Literal["RANGE"]
+    maxTotal: int  # the most you pay, held at booking
+    total: int  # the expected price, from deliveries already booked nearby
+    minTotal: int  # the least you pay
+
+
+class PooledQuoteWindow(TypedDict):
+    """An upcoming wave in a pooled quote, with this delivery's price range in it."""
+
+    wave: PooledWave
+    date: str
+    status: str  # OPEN, or FULL (create refuses it with WAVE_FULL)
+    bookBy: str
+    pickupFrom: str
+    pickupTo: str
+    deliverBy: str
+    pricing: PooledQuotePricing
+    quoteId: str  # pass to create with this window
+    expiresAt: str
+
+
 class TaskQuoteRequest(TypedDict):
     taskType: TaskType
     stages: List[Stage]
     priority: NotRequired[Priority]
     preferences: NotRequired[Preferences]
-    dispatch: NotRequired[DispatchRequest]
+    dispatch: NotRequired[DispatchRequest]  # not on POOLED_DELIVERY
+    # POOLED_DELIVERY only, and required there on create: the wave to book into.
+    window: NotRequired[PooledWindowRequest]
     # Insurance on the items' declared values. On by default; False turns it off for this task, so
     # no premium is charged and loss or damage is not covered. Send the same value you quoted.
     insured: NotRequired[bool]
@@ -128,7 +184,8 @@ class CreateTaskRequest(TaskQuoteRequest):
     externalId: NotRequired[str]
     quoteId: NotRequired[str]
     completionCode: NotRequired[Dict[str, Any]]
-    # Test keys. SEARCH_THEN_ASSIGNED and SEARCH_EXPIRED need WAIT_FOR_RIDER or SCHEDULED.
+    # Test keys. SEARCH_THEN_ASSIGNED and SEARCH_EXPIRED need WAIT_FOR_RIDER or SCHEDULED;
+    # POOLING_SOLO (POOLED_DELIVERY only) sends the delivery alone at its maximum price.
     simulationOutcome: NotRequired[str]
 
 
@@ -189,6 +246,10 @@ class Task(TypedDict):
     completionCode: NotRequired[Optional[Dict[str, Any]]]
     dispatch: TaskDispatch
     requirements: NotRequired[TaskRequirements]
+    # POOLED_DELIVERY only: its wave and where it stands.
+    window: NotRequired[TaskPooledWindow]
+    # Pooled tasks add kind "RANGE", maxTotal, minTotal, finalTotal and finalAt.
+    pricing: NotRequired[Optional[Dict[str, Any]]]
 
 
 class SimulateAdvanceResponse(TypedDict):
@@ -242,6 +303,8 @@ class TaskQuoteResponse(TypedDict):
     quoteTtlSeconds: int
     # What the task will need, as create will store it.
     requirements: NotRequired[TaskRequirements]
+    # POOLED_DELIVERY: the upcoming waves, each with its own price range and quoteId.
+    windows: NotRequired[List[PooledQuoteWindow]]
 
 
 class CancelTaskResponse(TypedDict):
