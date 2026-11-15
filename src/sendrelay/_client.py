@@ -5,7 +5,7 @@ from typing import Any, AsyncIterator, Dict, Iterator, Mapping, Optional, cast
 import httpx
 
 from . import _operations as ops
-from ._errors import ValidationError
+from ._errors import ApiError, ValidationError
 from ._http import DEFAULT_API_VERSION, DEFAULT_BASE_URL, Config, Request, RetryConfig, send, send_async
 from ._webhooks import WebhookSignatureVerification, verify_webhook_signature
 from .types import (
@@ -105,6 +105,16 @@ class Tasks:
     def get(self, task_id: str) -> GetTaskResponse:
         """A task, with your ``rating`` of it and the rider's ``liveEta`` while they are on the way."""
         return cast(GetTaskResponse, self._run(ops.tasks_get(task_id)))
+
+    def get_by_external_id(self, external_id: str) -> Optional[GetTaskResponse]:
+        """The task with the ``externalId`` you gave it (your order ID), as ``get`` returns it, or
+        ``None`` if no task in this key's mode has it."""
+        try:
+            return cast(GetTaskResponse, self._run(ops.tasks_get_by_external_id(external_id)))
+        except ApiError as error:
+            if error.status_code == 404 and error.code == "NOT_FOUND":
+                return None
+            raise
 
     def update(self, task_id: str, body: Body) -> Dict[str, Any]:
         """Change ``notes``, ``externalId``, or a stop's ``instructions`` and ``contact`` until that
@@ -321,6 +331,14 @@ class AsyncTasks:
 
     async def get(self, task_id: str) -> GetTaskResponse:
         return cast(GetTaskResponse, await self._run(ops.tasks_get(task_id)))
+
+    async def get_by_external_id(self, external_id: str) -> Optional[GetTaskResponse]:
+        try:
+            return cast(GetTaskResponse, await self._run(ops.tasks_get_by_external_id(external_id)))
+        except ApiError as error:
+            if error.status_code == 404 and error.code == "NOT_FOUND":
+                return None
+            raise
 
     async def update(self, task_id: str, body: Body) -> Dict[str, Any]:
         return cast(Dict[str, Any], await self._run(ops.tasks_update(task_id, body)))

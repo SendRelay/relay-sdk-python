@@ -37,6 +37,7 @@ SYNC: Dict[str, Callable[[Relay, Dict[str, Any]], Any]] = {
     "tasks.list": lambda r, i: r.tasks.list(**(i.get("query") or {})),
     "tasks.listAll": lambda r, i: [t["id"] for t in r.tasks.list_all(**(i.get("query") or {}))],
     "tasks.get": lambda r, i: r.tasks.get(i["taskId"]),
+    "tasks.getByExternalId": lambda r, i: r.tasks.get_by_external_id(i["externalId"]),
     "tasks.cancel": lambda r, i: r.tasks.cancel(i["taskId"], i.get("body")),
     "tasks.assign": lambda r, i: r.tasks.assign(i["taskId"], i["body"]),
     "tasks.availableRiders": lambda r, i: r.tasks.available_riders(i["taskId"], **(i.get("query") or {})),
@@ -76,6 +77,8 @@ async def run_async(relay: AsyncRelay, op: str, i: Dict[str, Any]) -> Any:
         return [t["id"] async for t in relay.tasks.list_all(**q)]
     if op == "tasks.get":
         return await relay.tasks.get(i["taskId"])
+    if op == "tasks.getByExternalId":
+        return await relay.tasks.get_by_external_id(i["externalId"])
     if op == "tasks.cancel":
         return await relay.tasks.cancel(i["taskId"], i.get("body"))
     if op == "tasks.assign":
@@ -164,7 +167,7 @@ class Exchanges:
         want = self.queue.pop(0)
         expected = want["request"]
         assert request.method == expected["method"]
-        assert request.url.path == expected["path"]
+        assert request.url.raw_path.split(b"?")[0].decode() == expected["path"]
         assert dict(request.url.params) == expected["query"]
         body = json.loads(request.content) if request.content else None
         assert body == expected["body"]

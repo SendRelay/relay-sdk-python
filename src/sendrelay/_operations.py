@@ -32,6 +32,10 @@ def tasks_get(task_id: str) -> Request:
     return Request("GET", f"/sdk/tasks/{_id(task_id, 'task_id')}")
 
 
+def tasks_get_by_external_id(external_id: str) -> Request:
+    return Request("GET", f"/sdk/tasks/by-external-id/{_id(external_id, 'external_id')}")
+
+
 def tasks_update(task_id: str, body: Mapping[str, Any]) -> Request:
     return Request("PATCH", f"/sdk/tasks/{_id(task_id, 'task_id')}", body=dict(body))
 
