@@ -165,3 +165,31 @@ def presence_get(query: Mapping[str, Any]) -> Request:
         else:
             del params["vehicleType"]
     return Request("GET", "/sdk/presence", query=params)
+
+
+# ─── Errands ─────────────────────────────────────────────────────────────────
+
+
+def errands_options() -> Request:
+    return Request("GET", "/sdk/errands/options")
+
+
+def tasks_approvals(task_id: str) -> Request:
+    return Request("GET", f"/sdk/tasks/{_id(task_id, 'task_id')}/approvals")
+
+
+def tasks_decide_approval(task_id: str, approval_id: str, body: Mapping[str, Any]) -> Request:
+    path = f"/sdk/tasks/{_id(task_id, 'task_id')}/approvals/{_id(approval_id, 'approval_id')}"
+    return Request("POST", path, body=dict(body))
+
+
+def tasks_skip_stage(task_id: str, stage_index: int) -> Request:
+    if isinstance(stage_index, bool) or not isinstance(stage_index, int) or stage_index < 0:
+        raise ValidationError("stage_index must be a whole number from 0", "stage_index")
+    return Request("POST", f"/sdk/tasks/{_id(task_id, 'task_id')}/stages/{stage_index}/skip")
+
+
+def tasks_view_file(task_id: str, file_url: str) -> Request:
+    if not file_url:
+        raise ValidationError("file_url is required", "file_url")
+    return Request("POST", f"/sdk/tasks/{_id(task_id, 'task_id')}/files/view", body={"fileUrl": file_url})

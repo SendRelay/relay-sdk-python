@@ -9,13 +9,17 @@ from ._errors import ApiError, ValidationError
 from ._http import DEFAULT_API_VERSION, DEFAULT_BASE_URL, Config, Request, RetryConfig, send, send_async
 from ._webhooks import WebhookSignatureVerification, verify_webhook_signature
 from .types import (
+    Approval,
     CancelTaskResponse,
     Claim,
     ClaimState,
     ClaimUpload,
     CreateTaskResponse,
     CreateWebhookResponse,
+    ErrandOptions,
+    FileViewResponse,
     GetTaskResponse,
+    ListApprovalsResponse,
     ListEventsResponse,
     ListTasksResponse,
     ListWebhooksResponse,
@@ -23,6 +27,7 @@ from .types import (
     RedeliverWebhookResponse,
     RelayEvent,
     SimulateAdvanceResponse,
+    SkipStageResponse,
     TaskEventsResponse,
     TaskListItem,
     TaskQuoteResponse,
@@ -118,7 +123,8 @@ class Tasks:
 
     def update(self, task_id: str, body: Body) -> Dict[str, Any]:
         """Change ``notes``, ``externalId``, or a stop's ``instructions`` and ``contact`` until that
-        stop is completed. Anything affecting price or dispatch is FIELD_NOT_EDITABLE."""
+        stop is completed; on an errand, also a stop's ``items`` or ``questions`` until the rider
+        reaches it. Anything affecting price or dispatch is FIELD_NOT_EDITABLE."""
         return cast(Dict[str, Any], self._run(ops.tasks_update(task_id, body)))
 
     def tracking_link(self, task_id: str, body: Optional[Body] = None) -> TrackingLinkResponse:
@@ -149,6 +155,33 @@ class Tasks:
     def simulate_advance(self, task_id: str) -> SimulateAdvanceResponse:
         """Test keys only: open a ``SCHEDULED`` task's search now instead of at ``searchStartsAt``."""
         return cast(SimulateAdvanceResponse, self._run(ops.tasks_simulate_advance(task_id)))
+
+    def approvals(self, task_id: str) -> ListApprovalsResponse:
+        """The rider's questions on an errand, newest first. Open ones have ``status == "PENDING"``."""
+        return cast(ListApprovalsResponse, self._run(ops.tasks_approvals(task_id)))
+
+    def decide_approval(self, task_id: str, approval_id: str, body: Body) -> Approval:
+        """Answer a question once: ``{"decision": "APPROVE" | "DECLINE", "note": ...}``. The same
+        decision again returns it as it stands; a different one after it was decided is a 409."""
+        return cast(Approval, self._run(ops.tasks_decide_approval(task_id, approval_id, body)))
+
+    def skip_stage(self, task_id: str, stage_index: int) -> SkipStageResponse:
+        """Drop a work stage the rider has not reached. You are not charged for it."""
+        return cast(SkipStageResponse, self._run(ops.tasks_skip_stage(task_id, stage_index)))
+
+    def view_file(self, task_id: str, file_url: str) -> FileViewResponse:
+        """A 15-minute link to a photo or receipt that a stage's ``result`` or an approval names."""
+        return cast(FileViewResponse, self._run(ops.tasks_view_file(task_id, file_url)))
+
+
+class Errands:
+    def __init__(self, run: Any) -> None:
+        self._run = run
+
+    def options(self) -> ErrandOptions:
+        """The errand price list and limits in force for your account. ``available`` is False until
+        errands with work stages are switched on for you."""
+        return cast(ErrandOptions, self._run(ops.errands_options()))
 
 
 class Webhooks:
@@ -288,6 +321,7 @@ class Relay(_Base):
         self.presence = Presence(self._request)
         self.events = Events(self._request)
         self.claims = Claims(self._request)
+        self.errands = Errands(self._request)
 
     def _request(self, request: Request) -> Any:
         return send(self._config, self._http, request)
@@ -367,6 +401,26 @@ class AsyncTasks:
     async def simulate_advance(self, task_id: str) -> SimulateAdvanceResponse:
         """Test keys only: open a ``SCHEDULED`` task's search now instead of at ``searchStartsAt``."""
         return cast(SimulateAdvanceResponse, await self._run(ops.tasks_simulate_advance(task_id)))
+
+    async def approvals(self, task_id: str) -> ListApprovalsResponse:
+        return cast(ListApprovalsResponse, await self._run(ops.tasks_approvals(task_id)))
+
+    async def decide_approval(self, task_id: str, approval_id: str, body: Body) -> Approval:
+        return cast(Approval, await self._run(ops.tasks_decide_approval(task_id, approval_id, body)))
+
+    async def skip_stage(self, task_id: str, stage_index: int) -> SkipStageResponse:
+        return cast(SkipStageResponse, await self._run(ops.tasks_skip_stage(task_id, stage_index)))
+
+    async def view_file(self, task_id: str, file_url: str) -> FileViewResponse:
+        return cast(FileViewResponse, await self._run(ops.tasks_view_file(task_id, file_url)))
+
+
+class AsyncErrands:
+    def __init__(self, run: Any) -> None:
+        self._run = run
+
+    async def options(self) -> ErrandOptions:
+        return cast(ErrandOptions, await self._run(ops.errands_options()))
 
 
 class AsyncWebhooks:
@@ -479,6 +533,7 @@ class AsyncRelay(_Base):
         self.presence = AsyncPresence(self._request)
         self.events = AsyncEvents(self._request)
         self.claims = AsyncClaims(self._request)
+        self.errands = AsyncErrands(self._request)
 
     async def _request(self, request: Request) -> Any:
         return await send_async(self._config, self._http, request)

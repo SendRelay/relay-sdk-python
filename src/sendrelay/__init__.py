@@ -9,10 +9,12 @@ from ._errors import ApiError, NetworkError, RelayError, ValidationError
 from ._http import RetryConfig
 from ._version import __version__
 from ._webhooks import WebhookSignatureVerification, verify_webhook_signature
+from .errand import Errand
 
 __all__ = [
     "ApiError",
     "AsyncRelay",
+    "Errand",
     "NetworkError",
     "Relay",
     "RelayError",

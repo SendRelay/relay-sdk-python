@@ -62,6 +62,11 @@ SYNC: Dict[str, Callable[[Relay, Dict[str, Any]], Any]] = {
     "claims.file": lambda r, i: r.claims.file(i["taskId"], i["body"]),
     "claims.respond": lambda r, i: r.claims.respond(i["taskId"], i["body"]),
     "claims.withdraw": lambda r, i: r.claims.withdraw(i["taskId"]),
+    "errands.options": lambda r, i: r.errands.options(),
+    "tasks.approvals": lambda r, i: r.tasks.approvals(i["taskId"]),
+    "tasks.decideApproval": lambda r, i: r.tasks.decide_approval(i["taskId"], i["approvalId"], i["body"]),
+    "tasks.skipStage": lambda r, i: r.tasks.skip_stage(i["taskId"], i["stageIndex"]),
+    "tasks.viewFile": lambda r, i: r.tasks.view_file(i["taskId"], i["fileUrl"]),
 }
 
 
@@ -127,6 +132,16 @@ async def run_async(relay: AsyncRelay, op: str, i: Dict[str, Any]) -> Any:
         return await relay.claims.respond(i["taskId"], i["body"])
     if op == "claims.withdraw":
         return await relay.claims.withdraw(i["taskId"])
+    if op == "errands.options":
+        return await relay.errands.options()
+    if op == "tasks.approvals":
+        return await relay.tasks.approvals(i["taskId"])
+    if op == "tasks.decideApproval":
+        return await relay.tasks.decide_approval(i["taskId"], i["approvalId"], i["body"])
+    if op == "tasks.skipStage":
+        return await relay.tasks.skip_stage(i["taskId"], i["stageIndex"])
+    if op == "tasks.viewFile":
+        return await relay.tasks.view_file(i["taskId"], i["fileUrl"])
     raise AssertionError(f"no async binding for {op}")
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.15.0 — 2026-11-16
+
+- Errands with work stages: `taskType: "ERRAND"` takes the stage types `PURCHASE`, `PAYMENT`, `QUEUE`, `INSPECTION` and `CUSTOM` beside `PICKUP` and `DROPOFF`, with their fields on `Stage` (`PurchaseItem`, `ErrandQuestion`, `OpeningHours`). `Errand.queue`, `Errand.purchase`, `Errand.payment`, `Errand.inspection`, `Errand.custom`, `Errand.pickup` and `Errand.dropoff` build the same dicts. See [errands](https://docs.sendrelay.com.ng/errands).
+- `priceLimit` and `approvals` on create and quote. An errand quote returns `pricing` (`ErrandQuotePricing`), `schedule` (`TaskSchedule`), `warnings` (`ErrandWarning`) and `stages`; create returns `errand`, `schedule`, `warnings` and `approvals`; tasks carry `errand`.
+- `errands.options()`, `tasks.approvals(task_id)`, `tasks.decide_approval(task_id, approval_id, body)`, `tasks.skip_stage(task_id, stage_index)` and `tasks.view_file(task_id, file_url)`, sync and async. `tasks.update()` also changes an errand stop's `items` or `questions`.
+- Other task types are unchanged.
+
 ## 1.14.0 — 2026-11-15
 
 - `tasks.get_by_external_id(external_id)` (sync and async): the task with the `externalId` you gave it at create, as `get` returns it, or `None` if none has it (`GET /v1/sdk/tasks/by-external-id/{externalId}`). The reference is percent-encoded, so it can hold a slash.

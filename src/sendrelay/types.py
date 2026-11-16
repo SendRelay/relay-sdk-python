@@ -35,7 +35,9 @@ PooledWave = Union[Literal["MIDDAY"], str]
 # Waiting for the wave, on a shared route, or going alone.
 PooledState = Union[Literal["WAITING", "GROUPED", "SOLO"], str]
 Priority = Literal["STANDARD", "URGENT"]
-StageType = Literal["PICKUP", "DROPOFF"]
+# ERRAND tasks may add work stages: PURCHASE, PAYMENT, QUEUE, INSPECTION and CUSTOM.
+WorkStageType = Literal["PURCHASE", "PAYMENT", "QUEUE", "INSPECTION", "CUSTOM"]
+StageType = Union[Literal["PICKUP", "DROPOFF"], WorkStageType]
 Weight = Literal["LIGHT", "STANDARD", "HEAVY", "FREIGHT"]
 Size = Literal["ENVELOPE", "BOX", "LARGE_BOX", "FREIGHT"]
 VehicleType = Literal["BICYCLE", "MOTORCYCLE", "TRICYCLE", "CAR", "VAN", "TRUCK"]
@@ -68,14 +70,65 @@ class Passenger(TypedDict):
     luggageCount: NotRequired[int]
 
 
+class PurchaseItem(TypedDict):
+    """One line of a PURCHASE's shopping list. Prices in kobo."""
+
+    name: str
+    quantity: NotRequired[int]
+    unit: NotRequired[str]
+    maxUnitPrice: NotRequired[int]  # above it, the rider asks you
+    note: NotRequired[str]
+    ifUnavailable: NotRequired[Literal["SKIP", "SIMILAR", "ASK"]]
+
+
+class ErrandQuestion(TypedDict):
+    """A question the rider answers at the stop."""
+
+    type: Literal["YES_NO", "TEXT", "NUMBER", "PHOTO", "CHOICE"]
+    text: str
+    id: NotRequired[str]
+    options: NotRequired[List[str]]  # CHOICE only, 2 to 10
+    required: NotRequired[bool]
+
+
+class OpeningHours(TypedDict):
+    """In Lagos time, HH:MM. ``days`` left out means every day."""
+
+    opens: str
+    closes: str
+    days: NotRequired[List[str]]
+
+
 class Stage(TypedDict):
     type: StageType
     location: Location
     instructions: NotRequired[str]
-    items: NotRequired[List[Item]]
+    items: NotRequired[Union[List[Item], List[PurchaseItem]]]
     passengers: NotRequired[List[Passenger]]
-    status: NotRequired[str]
+    status: NotRequired[str]  # errand stages may also end FAILED or SKIPPED
     completedAt: NotRequired[Optional[str]]
+    contact: NotRequired[Dict[str, str]]
+    deliverItems: NotRequired[List[str]]
+    # Errands (see errands.options() for each type's fees and default minutes).
+    reference: NotRequired[str]
+    expectedMinutes: NotRequired[int]
+    maxMinutes: NotRequired[int]
+    openingHours: NotRequired[OpeningHours]
+    ifUnavailable: NotRequired[Literal["SKIP", "SIMILAR", "ASK"]]
+    spendLimit: NotRequired[int]
+    payWith: NotRequired[Literal["MERCHANT_TRANSFER", "PREPAID"]]
+    merchant: NotRequired[Dict[str, str]]
+    payee: NotRequired[str]
+    amount: NotRequired[int]
+    billReference: NotRequired[str]
+    questions: NotRequired[List[ErrandQuestion]]
+    effort: NotRequired[Literal["S", "M", "L"]]
+    simulate: NotRequired[Dict[str, Any]]  # test keys only
+    # On a running or finished errand: what came back, why it failed or was skipped, the open question.
+    result: NotRequired[Optional[Dict[str, Any]]]
+    reason: NotRequired[Optional[str]]
+    approval: NotRequired[Optional[Dict[str, Any]]]
+    plannedArrivalAt: NotRequired[Optional[str]]
 
 
 class Preferences(TypedDict, total=False):
@@ -175,6 +228,11 @@ class TaskQuoteRequest(TypedDict):
     # Insurance on the items' declared values. On by default; False turns it off for this task, so
     # no premium is charged and loss or damage is not covered. Send the same value you quoted.
     insured: NotRequired[bool]
+    # Errands: the most you will pay (kobo); a maximum above it is a 422 PRICE_LIMIT_EXCEEDED.
+    priceLimit: NotRequired[int]
+    # Errands: how long the rider waits for your answer (waitSeconds) and what happens if nobody
+    # answers (ifNoAnswer).
+    approvals: NotRequired[Dict[str, Any]]
 
 
 class CreateTaskRequest(TaskQuoteRequest):
@@ -250,6 +308,11 @@ class Task(TypedDict):
     window: NotRequired[TaskPooledWindow]
     # Pooled tasks add kind "RANGE", maxTotal, minTotal, finalTotal and finalAt.
     pricing: NotRequired[Optional[Dict[str, Any]]]
+    # Errands with work stages: how far it got (outcome, completed, failed, skipped), the answer
+    # policy and your priceLimit. pricing then also has service, spend, soFar and the final bill.
+    errand: NotRequired[Optional[Dict[str, Any]]]
+    approvals: NotRequired[Dict[str, Any]]
+    priceLimit: NotRequired[Optional[int]]
 
 
 class SimulateAdvanceResponse(TypedDict):
@@ -288,6 +351,11 @@ class CreateTaskResponse(TypedDict):
     task: Task
     pricing: Dict[str, Any]
     idempotency: Dict[str, Any]
+    # Errands with work stages: the range held, when each stop is expected, anything worth a look.
+    errand: NotRequired[ErrandQuotePricing]
+    schedule: NotRequired[TaskSchedule]
+    warnings: NotRequired[List[ErrandWarning]]
+    approvals: NotRequired[Dict[str, Any]]
 
 
 class TaskQuoteResponse(TypedDict):
@@ -305,6 +373,12 @@ class TaskQuoteResponse(TypedDict):
     requirements: NotRequired[TaskRequirements]
     # POOLED_DELIVERY: the upcoming waves, each with its own price range and quoteId.
     windows: NotRequired[List[PooledQuoteWindow]]
+    # Errands with work stages: ``total`` is the most it can cost; ``pricing`` is the range.
+    pricing: NotRequired[ErrandQuotePricing]
+    schedule: NotRequired[TaskSchedule]
+    warnings: NotRequired[List[ErrandWarning]]
+    stages: NotRequired[List[Stage]]
+    approvals: NotRequired[Dict[str, Any]]
 
 
 class CancelTaskResponse(TypedDict):
@@ -441,4 +515,92 @@ class ClaimUpload(TypedDict):
     key: str
     contentType: ClaimFileContentType
     maxFileSize: int
+    expiresAt: str
+
+
+# ─── Errands ─────────────────────────────────────────────────────────────────
+
+
+class ErrandQuotePricing(TypedDict):
+    """An errand's quote: a range, split into the service and the goods (spend)."""
+
+    kind: Literal["RANGE"]
+    total: int  # expected
+    maxTotal: int  # the most, held at create
+    minTotal: int
+    service: Dict[str, int]  # expected, max
+    spend: Dict[str, int]  # expected, max
+    lines: List[Dict[str, Any]]
+
+
+class TaskScheduleStage(TypedDict):
+    index: int
+    arrivesAt: str
+    leavesAt: str
+    closesAt: NotRequired[str]
+    slackMinutes: NotRequired[int]
+
+
+class TaskSchedule(TypedDict):
+    startsAt: str
+    finishesAt: str
+    stages: List[TaskScheduleStage]
+
+
+class ErrandWarning(TypedDict):
+    """Worth a look before you pay; never blocks. Codes include TIGHT_OPENING_HOURS,
+    TIGHT_DELIVER_BY, SPEND_LIMIT_BELOW_LIST, NO_APPROVAL_LISTENER and LONG_WAIT_HOLD."""
+
+    code: str
+    message: str
+    stageIndex: NotRequired[int]
+
+
+class ErrandOptions(TypedDict):
+    """The price list and limits in force for your account."""
+
+    available: bool
+    currency: Literal["NGN"]
+    stageTypes: List[Dict[str, Any]]
+    paidWait: Dict[str, Any]
+    onSitePerMinute: int
+    handling: Dict[str, Any]
+    payWith: Dict[str, Any]
+    limits: Dict[str, int]
+    approvals: Dict[str, Any]
+
+
+class Approval(TypedDict):
+    """A question from the rider. Answer it with ``tasks.decide_approval``."""
+
+    id: str
+    taskId: str
+    stageIndex: int
+    stageReference: Optional[str]
+    kind: str  # SUBSTITUTE, PRICE_ABOVE_MAX, OVER_SPEND_LIMIT, MORE_TIME or QUESTION
+    status: str  # PENDING, APPROVED, DECLINED or EXPIRED
+    question: str
+    proposal: Dict[str, Any]
+    photo: Optional[str]
+    effect: Dict[str, Any]  # raisesMaximum, spendChange, maxTotalAfter
+    expiresAt: str
+    ifNoAnswer: Literal["DECLINE", "APPROVE"]
+    decidedBy: Optional[str]
+    decidedAt: Optional[str]
+    note: Optional[str]
+    createdAt: str
+
+
+class ListApprovalsResponse(TypedDict):
+    approvals: List[Approval]
+
+
+class SkipStageResponse(TypedDict):
+    task: Task
+
+
+class FileViewResponse(TypedDict):
+    """A link to a photo or receipt, valid for 15 minutes."""
+
+    downloadUrl: str
     expiresAt: str
